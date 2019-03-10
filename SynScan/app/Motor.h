@@ -1,8 +1,18 @@
 /*
- * Motor.h
+ * This file is part of the Open Synscan Project distribution (https://github.com/vsirvent/Synscan).
+ * Copyright (c) 2019 Vicente Sirvent Orts.
  *
- *  Created on: 29 dic. 2018
- *      Author: Vicen
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef MOTOR_H_
@@ -63,10 +73,12 @@ private:
 	ESpeed mSpeed = ESpeed::SLOW;
 	ESlewType mType = ESlewType::NONE;
 	EDirection mDir = EDirection::NONE;
-	u32 mAutoGuideMode = 100;
+	u32 mAutoGuideMode = 1000;
 	u8 mDirPin = 0;
 	u8 mStepPin = 0;
 	u8 mMode[2];
+
+	Timer* m100msecTimer = NULL;
 
 	int mMaxCount = 0;
 	int mMinCount = 0;
@@ -81,6 +93,7 @@ private:
 	void setDir(EDirection dir);
 	void stop();
 	int  degreeToPosition(float degree);
+	void on100msecTick();
 	
 public:
 

@@ -1,8 +1,18 @@
 /*
- * Motor.cpp
+ * This file is part of the Open Synscan Project distribution (https://github.com/vsirvent/Synscan).
+ * Copyright (c) 2019 Vicente Sirvent Orts.
  *
- *  Created on: 29 dic. 2018
- *      Author: Vicen
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "Motor.h"
@@ -10,7 +20,8 @@
 
 Motor::Motor(EAxis axis) {
 
-	Logger::notice("Motor[%d]: Initializing %s motor...", axis, axis == EAxis::AXIS_RA?"RA":"DEC");
+	Logger::notice("Motor[%d]: Initializing %s motor...", axis,
+			axis == EAxis::AXIS_RA ? "RA" : "DEC");
 	mAxis = axis;
 	if (mAxis == EAxis::AXIS_RA) {
 		mDirPin = 4;
@@ -29,6 +40,7 @@ Motor::Motor(EAxis axis) {
 		mMinCount = degreeToPosition(15.0f);
 		mPosition = degreeToPosition(90.0f);
 	}
+
 	pinMode(mDirPin, OUTPUT);
 	pinMode(mStepPin, OUTPUT);
 	pinMode(mMode[0], OUTPUT);
@@ -55,11 +67,15 @@ Motor::Motor(EAxis axis) {
 	Serial.printf("100MS_STEP = %d\n", m100msPeriod);
 	Serial.printf("TIMER_FREQ = %d\n", Defines::TIMER_FREQ);
 
+	m100msecTimer = new Timer();
+	m100msecTimer->initializeMs(100, TimerDelegate(&Motor::on100msecTick, this)).start();
+
 	Logger::notice("Motor[%d]: Init done", mAxis);
 }
 
 Motor::~Motor() {
-
+	m100msecTimer->stop();
+	delete m100msecTimer;
 }
 
 void Motor::setMicroSteps(bool active) {
@@ -67,7 +83,7 @@ void Motor::setMicroSteps(bool active) {
 	if (HIGH_SPEED_RATIO == 1) {
 		active = true; //same high and low speed
 	}
-	if (mMicroStep != active){
+	if (mMicroStep != active) {
 		if (active) {
 			digitalWrite(mMode[0], 1);
 			digitalWrite(mMode[1], 1);
@@ -79,46 +95,46 @@ void Motor::setMicroSteps(bool active) {
 	}
 }
 
-int
-Motor::updateCurrentStepPeriod(int target_step) {
+int Motor::updateCurrentStepPeriod(int target_step) {
 	int ret = target_step;
 	if (mCurrentStepPeriod != target_step) {
-		int current_step_freq = Defines::TIMER_FREQ/mCurrentStepPeriod;
-		int target_step_freq = Defines::TIMER_FREQ/target_step;
+		int current_step_freq = Defines::TIMER_FREQ / mCurrentStepPeriod;
+		int target_step_freq = Defines::TIMER_FREQ / target_step;
 		int diff_freq = abs(current_step_freq - target_step_freq);
 
 		//Only apply acceleration if diff is greater than sideral freq.
 		if (diff_freq > SIDERAL_PERIOD_FREQ) {
-			int block_freq = diff_freq/8;
-			if (block_freq < SIDERAL_PERIOD_FREQ) { block_freq = SIDERAL_PERIOD_FREQ; }
+			int block_freq = diff_freq / 8;
+			if (block_freq < SIDERAL_PERIOD_FREQ) {
+				block_freq = SIDERAL_PERIOD_FREQ;
+			}
 
 			if (current_step_freq < target_step_freq) {
 				current_step_freq += block_freq;
 				if (current_step_freq > target_step_freq) {
 					current_step_freq = target_step_freq;
 				}
-			}else if (current_step_freq > target_step_freq) {
+			} else if (current_step_freq > target_step_freq) {
 				current_step_freq -= block_freq;
 				if (current_step_freq < target_step_freq) {
 					current_step_freq = target_step_freq;
 				}
 			}
-			ret = (Defines::TIMER_FREQ/current_step_freq); //new step period
+			ret = (Defines::TIMER_FREQ / current_step_freq); //new step period
 		}
 	}
 	return ret;
 }
 
-void
-Motor::setStepPeriod(u32 period) {
-	u32 speed = mSideralStepPeriod/period;
+void Motor::setStepPeriod(u32 period) {
+	u32 speed = mSideralStepPeriod / period;
 	if (!mMicroStep) {
 		speed *= HIGH_SPEED_RATIO;
 	}
 
 	//Limit speed to mFastStepMult
 	if (speed > mFastStepMult) {
-		period = mSideralStepPeriod/mFastStepMult;
+		period = mSideralStepPeriod / mFastStepMult;
 		if (!mMicroStep) {
 			period *= HIGH_SPEED_RATIO;
 		}
@@ -126,11 +142,10 @@ Motor::setStepPeriod(u32 period) {
 	mStepPeriod = period;
 }
 
-
 void Motor::setDir(EDirection dir) {
 	if (dir != mDir) {
-		Logger::notice("Motor[%d]: Direction: %s",
-				mAxis, dir == EDirection::CW ? "CW" : "CCW");
+		Logger::notice("Motor[%d]: Direction: %s", mAxis,
+				dir == EDirection::CW ? "CW" : "CCW");
 		mDir = dir;
 		if (mDir == EDirection::CW) {
 			digitalWrite(mDirPin, 1);
@@ -141,7 +156,7 @@ void Motor::setDir(EDirection dir) {
 }
 
 int Motor::degreeToPosition(float degree) {
-	return (int)((0x800000 + (int)(degree/DEGREE_PER_STEP)));
+	return (int) ((0x800000 + (int) (degree / DEGREE_PER_STEP)));
 }
 
 void Motor::stop() {
@@ -150,58 +165,60 @@ void Motor::stop() {
 	mStepCount = 0;
 }
 
-void IRAM_ATTR Motor::onTick() {
-	if (mMoving) {
+void Motor::on100msecTick() {
+	if (mType == ESlewType::GOTO) {
+		//Stop if controller is not sending commands
+		//(comm fail protection).
+		if (mCommStatusWD++ >= mCommStatusTimeout) {
+			mToStop = true;
+		}
 
-		if (m100msCount++ >= m100msPeriod)
-		{
-			m100msCount = 0;
+		if (mToStop) {
+			//Decelerate to sideral speed and stop
+			mCurrentStepPeriod = updateCurrentStepPeriod(mSideralStepPeriod);
+			if (mCurrentStepPeriod >= mSideralStepPeriod) {
+				stop();
+			}
 
-			if (mType == ESlewType::GOTO) {
-				//Stop if controller is not sending commands
-				//(comm fail protection).
-				if (mCommStatusWD++ >= mCommStatusTimeout) {
-					mToStop = true;
-				}
+		} else {
+			if (mTargetPosition == INFINITE) {
+				stop();
+			}
+			//Normal goto
+			u32 remain = abs(mTargetPosition - mPosition) / 50;
+			u32 elapsed = abs(mPosition - mOrigPosition) / 50;
+			u32 mult = MIN(remain, elapsed);
+			mult = MIN(mFastStepMult, mult);
+			mult = MIN(mSideralStepPeriod, mult);
 
-				if (mToStop) {
-					//Decelerate to sideral speed and stop
-					mCurrentStepPeriod = updateCurrentStepPeriod(mSideralStepPeriod);
-					if (mCurrentStepPeriod >= mSideralStepPeriod) {
-						stop();
-					}
+			if (!mMicroStep) {
+				mult /= HIGH_SPEED_RATIO;
+			}
 
-				}else{
-					if (mTargetPosition == INFINITE) {
-						stop();
-					}
-					//Normal goto
-					u32 remain = abs(mTargetPosition - mPosition)/50;
-					u32 elapsed = abs(mPosition - mOrigPosition)/50;
-					u32 mult = MIN(remain, elapsed);
-					mult = MIN(mFastStepMult, mult);
-					mult = MIN(mSideralStepPeriod, mult);
-
-					if (!mMicroStep) {
-						mult /= HIGH_SPEED_RATIO;
-					}
-
-					if (mult > 1) {
-						mCurrentStepPeriod = (mSideralStepPeriod/mult);
-					}else{
-						mCurrentStepPeriod = ((int)(SIDERAL_STEP_COUNT/2.0f));
-					}
-				}
-			}else{
-				//Track
-				int target_period = mToStop?mSideralStepPeriod:mStepPeriod;
-				mCurrentStepPeriod = updateCurrentStepPeriod(target_period);
-
-				if (mCurrentStepPeriod >= mSideralStepPeriod && mToStop) {
-					stop();
-				}
+			if (mult > 1) {
+				mCurrentStepPeriod = (mSideralStepPeriod / mult);
+			} else {
+				mCurrentStepPeriod = ((int) (SIDERAL_STEP_COUNT / 2.0f));
 			}
 		}
+	} else {
+		//Track
+		int sideral = mSideralStepPeriod;
+		if (mSideralStepPeriod != 1000) {
+			sideral = (sideral * 1000) / mAutoGuideMode;
+		}
+		int target_period = mToStop ? sideral : mStepPeriod;
+		mCurrentStepPeriod = updateCurrentStepPeriod(target_period);
+
+		if (mCurrentStepPeriod >= mSideralStepPeriod && mToStop) {
+			stop();
+		}
+	}
+
+}
+
+void IRAM_ATTR Motor::onTick() {
+	if (mMoving) {
 
 		mStepCount++;
 
@@ -219,8 +236,8 @@ void IRAM_ATTR Motor::onTick() {
 			}
 
 			mPosition += amount;
-			if ((mDir == EDirection::CW  && mPosition > mMaxCount) ||
-				(mDir == EDirection::CCW && mPosition < mMinCount)) {
+			if ((mDir == EDirection::CW && mPosition > mMaxCount) ||
+					(mDir == EDirection::CCW && mPosition < mMinCount)) {
 				//Absolute position protection
 				stop();
 			}
@@ -243,14 +260,15 @@ void IRAM_ATTR Motor::onTick() {
 	}
 }
 
-void
-Motor::printInfo() const {
-	u32 speed = mSideralStepPeriod/mCurrentStepPeriod;
+void Motor::printInfo() const {
+	u32 speed = mSideralStepPeriod / mCurrentStepPeriod;
 	if (!mMicroStep) {
 		speed *= HIGH_SPEED_RATIO;
 	}
-	Logger::notice("Motor[%d]: running: %d, speed: x%d, micro: %d, step: %d, track_speed: %d, position: %d, target: %d, break: %d",
-			mAxis, mMoving, speed, mMicroStep, mCurrentStepPeriod, mSpeed, mPosition, mTargetPosition, mBreakPosition);
+	Logger::notice(
+			"Motor[%d]: running: %d, speed: x%d, micro: %d, step: %d, track_speed: %d, position: %d, target: %d, break: %d",
+			mAxis, mMoving, speed, mMicroStep, mCurrentStepPeriod, mSpeed,
+			mPosition, mTargetPosition, mBreakPosition);
 }
 
 Reply*
@@ -325,10 +343,11 @@ Motor::processCommand(const Command* cmd) {
 			int increment = target->GetIncrement();
 			if (mDir == EDirection::CW) {
 				mTargetPosition = mPosition + increment;
-			}else{
+			} else {
 				mTargetPosition = mPosition - increment;
 			}
-			Logger::notice("Motor[%d]: position = %d, increment = %d, target = %d",
+			Logger::notice(
+					"Motor[%d]: position = %d, increment = %d, target = %d",
 					mAxis, mPosition, increment, mTargetPosition);
 			reply = new EmptyReply();
 		} else {
@@ -342,8 +361,8 @@ Motor::processCommand(const Command* cmd) {
 		if (!mMoving) {
 			SetBreakPointIncrement* target = (SetBreakPointIncrement*) cmd;
 			mBreakPosition = target->GetIncrement();
-			Logger::notice("Motor[%d]: break point = %d",
-					mAxis, mBreakPosition);
+			Logger::notice("Motor[%d]: break point = %d", mAxis,
+					mBreakPosition);
 			reply = new EmptyReply();
 		} else {
 			Logger::error("Motor[%d]: Motor not stopped", mAxis);
@@ -383,7 +402,8 @@ Motor::processCommand(const Command* cmd) {
 			setMicroSteps(false);
 			break;
 		default: {
-			Logger::warning("Motor[%d]: Speed not set, using slow speed", mAxis);
+			Logger::warning("Motor[%d]: Speed not set, using slow speed",
+					mAxis);
 			setMicroSteps(true);
 			break;
 		}
@@ -393,7 +413,7 @@ Motor::processCommand(const Command* cmd) {
 			mToStop = false;
 			mMoving = true;
 			reply = new EmptyReply();
-		}else{
+		} else {
 			reply = new ErrorReply(ErrorReply::EErrorCode::Not_Initialized);
 		}
 		break;
@@ -417,9 +437,10 @@ Motor::processCommand(const Command* cmd) {
 	}
 	case ECommand::SET_AUTOGUIDE_SPEED: {
 		Logger::notice("Motor[%d]: SET_AUTOGUIDE_SPEED", mAxis);
-		SetAutoGuideSpeed* auto_cmd = (SetAutoGuideSpeed*)cmd;
+		SetAutoGuideSpeed* auto_cmd = (SetAutoGuideSpeed*) cmd;
 		mAutoGuideMode = auto_cmd->getSpeed();
-		Logger::notice("Motor[%d]: Autoguide speed: %d/1000", mAxis, mAutoGuideMode);
+		Logger::notice("Motor[%d]: Autoguide speed: %d/1000", mAxis,
+				mAutoGuideMode);
 		reply = new EmptyReply();
 		break;
 	}
@@ -482,7 +503,8 @@ Motor::processCommand(const Command* cmd) {
 		break;
 	}
 	case ECommand::GET_SIDERAL_PERIOD: {
-		Logger::verbose("Motor[%d]: GET_SIDERAL_PERIOD: %d ticks", mAxis, mSideralStepPeriod);
+		Logger::verbose("Motor[%d]: GET_SIDERAL_PERIOD: %d ticks", mAxis,
+				mSideralStepPeriod);
 		DataReply* data_reply = new DataReply();
 		data_reply->setData(mSideralStepPeriod, 6);
 		reply = data_reply;

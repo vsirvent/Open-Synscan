@@ -1,4 +1,7 @@
-#pragma once
+
+
+#ifndef _LOGGER_H__
+#define _LOGGER_H__
 
 #include "Arduino.h"
 
@@ -52,5 +55,4 @@ private:
     Level mLevel = NOTICE;
 };
 
-//Added by Sloeber 
-#pragma once
+#endif
