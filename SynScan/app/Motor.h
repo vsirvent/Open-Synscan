@@ -26,7 +26,7 @@ class Motor: public ITickListener {
 public:
 	static const u8 VERSION_MAJOR = 2;
 	static const u8 VERSION_MINOR = 0;
-	static const u8 VERSION_MICRO = 4;
+	static const u8 VERSION_MICRO = 5;
 	static const u8 VERSION_PATCH = 0;
 
 	static const u32 MICRO_STEPS = 32;
