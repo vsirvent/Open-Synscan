@@ -8,4 +8,4 @@ Hardware schematics are available here:
 
 https://circuitmaker.com/Projects/Details/Vicente-Sirvent/SynscanMotor
 
-Step motors are 0.9 degrees and 3d print models will be uploaded soon!
+3d print models available also available in "3dFiles" folder.
