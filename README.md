@@ -53,11 +53,15 @@ log off #To stop receiving traces
 
 After boot, open-synscan will create a WIFI network "Synscan" with password "12345678". You can then connect PC computer/tablet or phone, start the control application (EQMOD, SynScan PRO), connect the application to the mount and control it using Synscan protocol.
 
-* Hardware schematics are available here: 
+* Making the ESP8266 control board and setting up step motors: 
+
+The PCB control board schematics based on ESP8266 chip is available here:
 
 https://circuitmaker.com/Projects/Details/Vicente-Sirvent/SynscanMotor
 
-* 3d print models available also available in "3dFiles" folder.
+
+
+Motors are mounted in the telescope mount with 3d print models available in "3dFiles" folder. Step motors use gt2 6mm with wheels (60 and 16 teeth) + 258mm gt2 6mm closed belts to move the gears of the mount.
 
 * Demo video using Cartes du Ciel + EQMOD + SynscanCom2Wifi (https://github.com/vsirvent/SynscanCom2Wifi) to control an Exos-2 mount using WIFI connection:
 
