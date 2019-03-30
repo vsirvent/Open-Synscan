@@ -1,7 +1,14 @@
 ## Local build configuration
 ## Parameters configured here will override default and ENV values.
 ## Uncomment and change examples:
-include /home/vsirvent/src/Sming/Sming/Makefile-linux.mk
+SMING_HOME=#Write Sming folder here. Ex: /home/vicen/src/Sming/Sming/
+
+ifndef SMING_HOME
+$(error SMING_HOME is not set. Please configure it in Makefile-user.mk)
+endif
+
+include $(SMING_HOME)/Makefile-linux.mk
+
 #Add your source directories here separated by space
 MODULES = app
 SPI_SIZE = 4M

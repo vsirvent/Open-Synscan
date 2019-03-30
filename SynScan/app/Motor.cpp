@@ -68,7 +68,7 @@ Motor::Motor(EAxis axis) {
 	Serial.printf("TIMER_FREQ = %d\n", Defines::TIMER_FREQ);
 
 	m100msecTimer = new Timer();
-	m100msecTimer->initializeMs(100, TimerDelegate(&Motor::on100msecTick, this)).start();
+	m100msecTimer->initializeMs(100, std::bind(&Motor::on100msecTick, this)).start();
 
 	Logger::notice("Motor[%d]: Init done", mAxis);
 }
