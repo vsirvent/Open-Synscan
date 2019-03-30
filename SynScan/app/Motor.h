@@ -27,7 +27,7 @@ public:
 	static const u8 VERSION_MAJOR = 2;
 	static const u8 VERSION_MINOR = 0;
 	static const u8 VERSION_MICRO = 5;
-	static const u8 VERSION_PATCH = 0;
+	static const u8 VERSION_PATCH = 1;
 
 	static const u32 MICRO_STEPS = 32;
 	static const u32 MOUNT_RATIO = 144;
