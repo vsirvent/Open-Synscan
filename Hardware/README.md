@@ -1,2 +1,0 @@
-Hardware schematics avaiable here:
-
