@@ -239,6 +239,8 @@ void IRAM_ATTR Motor::onTick() {
 			if ((mDir == EDirection::CW && mPosition > mMaxCount) ||
 					(mDir == EDirection::CCW && mPosition < mMinCount)) {
 				//Absolute position protection
+				//TODO: Calculate correctly the limits, depending the RA position
+				//DEC limit changed. The current limit algorithm is too hard.
 				stop();
 			}
 			if (mType == ESlewType::GOTO) {
