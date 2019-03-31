@@ -45,6 +45,19 @@ Then type:
 make flash
 ```
 
+## Configure motor values
+
+Each mount can have a different number of gear teeth on DEC and RA axis. You can check your mount values at <http://eq-mod.sourceforge.net/prerequisites.html>. You must set the correct values of the gear teeth number and the GT2 wheel teeth numbers at Motor.h constant members:
+
+```
+  Motor.h
+  ...
+	static const u32 MOUNT_RATIO = 144; //The mount gear teeth number
+	static const u32 GEAR_RATIO_NUM = 60; //Big GT2 wheel teeth number
+	static const u32 GEAR_RATIO_DEN = 16; //Small GT2 wheel teeth number
+  ...
+```
+
 ## Debug
 
 You can debug using serial port at 115200bps 8n1 or by ethernet network receiving UDP packets with netcat. To get traces with netcat make the following commands:
