@@ -60,7 +60,7 @@ Each mount can have a different number of gear teeth on DEC and RA axis. You can
 
 ## Debug
 
-You can debug using serial port at 115200bps 8n1 or by ethernet network receiving UDP packets with netcat. To get traces with netcat make the following commands:
+You can debug using serial port at 115200bps 8n1 or by ethernet network receiving UDP packets with netcat. To get traces with netcat type the following commands:
 
 ```
 nc -u [open-synscan-ip] 6667
