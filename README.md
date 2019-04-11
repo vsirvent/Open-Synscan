@@ -83,6 +83,6 @@ Motors are mounted in the telescope mount with 3d print models available in "3dF
 
 ## Demo
 
-This demo video shows Open-Synscan working with Cartes du Ciel + EQMOD + SynscanCom2Wifi (https://github.com/vsirvent/SynscanCom2Wifi) to control an Exos-2 mount using WIFI connection:
+This demo video shows Open-Synscan working with Cartes du Ciel + EQMOD + SynscanCom2Wifi (https://github.com/vsirvent/SynscanCom2Wifi) to control a Meade LXD75 mount using WIFI connection:
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/-moP3M088pw/0.jpg)](https://www.youtube.com/watch?v=-moP3M088pw)
