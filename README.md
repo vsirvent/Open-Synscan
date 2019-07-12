@@ -6,7 +6,7 @@ Open-Synscan runs on a ESP8266 to control 2 step motors and work with Skywatcher
 
 Tested with EQMOD and Android Synscan PRO.
 
-EQMOD only works with serial comm port, so SerialCom2Wifi app must be used (check the project on github).
+EQMOD only works with serial comm port, so SerialCom2Wifi app must be used (https://github.com/vsirvent/SynscanCom2Wifi).
 
 ## Getting the code
 
