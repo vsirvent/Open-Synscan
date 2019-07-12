@@ -79,7 +79,7 @@ https://circuitmaker.com/Projects/Details/Vicente-Sirvent/SynscanMotor
 
 ![screeshot](https://raw.githubusercontent.com/vsirvent/Open-Synscan/master/Hardware/open-synscan-3d.png)
 
-Motors are mounted in the telescope mount with 3d print models available in "3dFiles" folder. Step motors use gt2 6mm with wheels (60 and 16 teeth) + 258mm gt2 6mm closed belts to move the gears of the mount.
+Motors are mounted in the telescope mount with 3d print models available in "3dFiles" folder. Step motors use gt2 6mm with wheels (60 and 16 teeth) + 158mm gt2 6mm closed belts to move the gears of the mount.
 
 ## Demo
 
