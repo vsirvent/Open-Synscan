@@ -55,6 +55,7 @@ Each mount can have a different number of gear teeth on DEC and RA axis. You can
 	static const u32 MOUNT_RATIO = 144; //The mount gear teeth number
 	static const u32 GEAR_RATIO_NUM = 60; //Big GT2 wheel teeth number
 	static const u32 GEAR_RATIO_DEN = 16; //Small GT2 wheel teeth number
+	const float STEP_DEGREE = 0.9f; //Here the step degree of the motors
   ...
 ```
 
