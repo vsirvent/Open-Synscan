@@ -30,6 +30,7 @@ UdpComm::UdpComm() {
 
 UdpComm::~UdpComm() {
 	delete mUdp;
+	delete mPulseUdp;
 }
 
 void
