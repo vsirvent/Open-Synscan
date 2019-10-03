@@ -58,7 +58,7 @@ UdpComm::onUdpRx(UdpConnection& connection, char *data, int size, IPAddress remo
 			break;
 		}
 	}
-	Logger::verbose("UDP <= [%s][%d]: %s", ok?"OK":"ERR", size, data);
+	//Logger::verbose("UDP <= [%s][%d]: %s", ok?"OK":"ERR", size, data);
 	if (data != NULL && size > 1) {
 		Command* cmd = CommandFactory::parseData(data, size);
 		if (cmd != NULL) {
@@ -74,7 +74,6 @@ UdpComm::onUdpRx(UdpConnection& connection, char *data, int size, IPAddress remo
 
 void
 UdpComm::sendDiscovery() {
-	bool ret = false;
 	mUdp->sendTo(mBroadcast, Defines::PULSE_DISCOVERY_PORT, (const char*)mDiscoveryData, 2);
 }
 
@@ -83,7 +82,7 @@ UdpComm::sendReply(const Reply* reply) {
 	bool ret = false;
 	if (mRemotePort != 0) {
 		String str = reply->toString();
-		Logger::verbose("UDP => %s", str.c_str());
+		//Logger::verbose("UDP => %s", str.c_str());
 		mUdp->sendStringTo(mRemoteIP, mRemotePort, str);
 		ret = true;
 	}
