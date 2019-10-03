@@ -25,6 +25,9 @@
 struct Defines {
 	static const u32 LOG_PORT = 6667;
 	static const u32 SYNSCAN_PORT = 11880;
+	static const u32 PULSE_GUIDE_PORT = 5002;
+	static const u32 PULSE_DISCOVERY_PORT = 5003;
+	static const u32 DISCOVERY_PT = 0x36;
 	static const u32 TIMER_FREQ = 64935*3; //EQ6 interrupt freq
 };
 

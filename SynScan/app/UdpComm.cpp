@@ -22,10 +22,28 @@
 UdpComm::UdpComm() {
 	mUdp = new UdpConnection(UdpConnectionDataDelegate(&UdpComm::onUdpRx, this));
 	mUdp->listen(Defines::SYNSCAN_PORT);
+	mPulseUdp = new UdpConnection(UdpConnectionDataDelegate(&UdpComm::onPulseUdpRx, this));
+	mPulseUdp->listen(Defines::PULSE_GUIDE_PORT);
+	mDiscoveryData[0] = Defines::DISCOVERY_PT;
+	mBroadcast = IPAddress(IPADDR_BROADCAST);
 }
 
 UdpComm::~UdpComm() {
 	delete mUdp;
+}
+
+void
+UdpComm::onPulseUdpRx(UdpConnection& connection, char *data, int size, IPAddress remoteIP, uint16_t remotePort) {
+	bool ok = false;
+	if (data != NULL) {
+		Command* cmd = CommandFactory::parseData(data, size);
+		if (cmd != NULL) {
+			if (mListener != NULL) {
+				mListener->onCommandReceived(this, cmd);
+			}
+			delete cmd;
+		}
+	}
 }
 
 void
@@ -51,6 +69,12 @@ UdpComm::onUdpRx(UdpConnection& connection, char *data, int size, IPAddress remo
 			delete cmd;
 		}
 	}
+}
+
+void
+UdpComm::sendDiscovery() {
+	bool ret = false;
+	mUdp->sendTo(mBroadcast, Defines::PULSE_DISCOVERY_PORT, (const char*)mDiscoveryData, 2);
 }
 
 bool

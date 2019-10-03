@@ -62,6 +62,7 @@ private:
 	int mStepCount = 0;
 	bool mStepDown = false;
 	int mCurrentStepPeriod = mSideralStepPeriod;
+	int mCurrentStepFreq = Defines::TIMER_FREQ/mCurrentStepPeriod;
 
 	int m100msCount = 0;
 	int m100msPeriod = Defines::TIMER_FREQ/10;
@@ -84,7 +85,11 @@ private:
 	int mMinCount = 0;
 	int mCommStatusWD = 0;
 	int mCommStatusTimeout = 20; //5 seconds. x 100msec
-
+	int mPulseTotalTicks = 0;
+	int mPulseCurrentTicks = 0;
+	EDirection mPulseDir = EDirection::NONE;
+	int mPulseStepFreq = 0;
+	bool mIsPulseDone = false;
 	EAxis mAxis;
 
 	int updateCurrentStepPeriod(int target_step);

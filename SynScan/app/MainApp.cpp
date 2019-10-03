@@ -57,6 +57,7 @@ void
 MainApp::oneSecTick() {
 	mRaMotor->printInfo();
 	mDecMotor->printInfo();
+	mUdpComm->sendDiscovery();
 }
 
 void

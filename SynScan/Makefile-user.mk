@@ -1,7 +1,7 @@
 ## Local build configuration
 ## Parameters configured here will override default and ENV values.
 ## Uncomment and change examples:
-SMING_HOME=#Write Sming folder here. Ex: /home/vicen/src/Sming/Sming/
+SMING_HOME=/home/vicen/src/Sming/Sming/
 
 ifndef SMING_HOME
 $(error SMING_HOME is not set. Please configure it in Makefile-user.mk)

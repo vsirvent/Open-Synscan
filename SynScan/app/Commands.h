@@ -351,6 +351,7 @@ enum class ECommand {
 	GET_VERSION,
 	EXT_SET,
 	EXT_GET,
+	PULSE_GUIDE,
 	NONE
 };
 
@@ -491,11 +492,73 @@ public:
 	}
 };
 
+class PulseGuideCmd: public Command {
+public:
+	static const u8 PULSE_PKT_START = 0x35;
+	static const int MSG_SIZE = 7;
+private:
+	int mDuration = 0;
+	float mRate = 0.0f;
+	EDirection mDir = EDirection::NONE;
+public:
+	PulseGuideCmd() {
+		mCmd = ECommand::PULSE_GUIDE;
+	}
+
+	int GetDuration() {
+		return mDuration;
+	}
+
+	float GetRate() {
+		return mRate;
+	}
+
+	EDirection GetDir() {
+		return mDir;
+	}
+	
+	bool Parse(const char* data, int len) {
+		bool ret = false;
+		if (len == MSG_SIZE) {
+			if (data[0] == PULSE_PKT_START) {
+				char dir = data[1];
+				switch (dir) {
+				case 0: {
+					mAxis = EAxis::AXIS_DEC;
+					mDir = EDirection::CW;
+					break;
+				}
+				case 1: {
+					mAxis = EAxis::AXIS_DEC;
+					mDir = EDirection::CCW;
+					break;
+				}
+				case 2: {
+					mAxis = EAxis::AXIS_RA;
+					mDir = EDirection::CW;
+					break;
+				}
+				case 3: {
+					mAxis = EAxis::AXIS_RA;
+					mDir = EDirection::CCW;
+					break;
+				}
+				}
+				mDuration = ntohl(*(long*)(data + 2));
+				mRate = ((float)data[6])/10.0f;
+			}
+		} else {
+			Logger::error("Bad message size %d", len);
+		}
+		return ret;
+	}
+};
+
 class SetPositionCommand: public Command {
 private:
 	static const int MSG_SIZE = 9;
 	int mPosition = 0;
-
+	
 public:
 
 	SetPositionCommand() {
