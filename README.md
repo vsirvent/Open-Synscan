@@ -6,7 +6,7 @@ Open-Synscan runs on a ESP8266 to control 2 step motors and work with Skywatcher
 
 Tested with EQMOD and Android Synscan PRO.
 
-EQMOD only works with serial comm port, so SerialCom2Wifi app must be used (check the project on github).
+EQMOD only works with serial comm port, so SerialCom2Wifi app must be used (https://github.com/vsirvent/SynscanCom2Wifi).
 
 ## Getting the code
 
@@ -55,12 +55,13 @@ Each mount can have a different number of gear teeth on DEC and RA axis. You can
 	static const u32 MOUNT_RATIO = 144; //The mount gear teeth number
 	static const u32 GEAR_RATIO_NUM = 60; //Big GT2 wheel teeth number
 	static const u32 GEAR_RATIO_DEN = 16; //Small GT2 wheel teeth number
+	const float STEP_DEGREE = 0.9f; //Here the step degree of the motors
   ...
 ```
 
 ## Debug
 
-You can debug using serial port at 115200bps 8n1 or by ethernet network receiving UDP packets with netcat. To get traces with netcat make the following commands:
+You can debug using serial port at 115200bps 8n1 or by ethernet network receiving UDP packets with netcat. To get traces with netcat type the following commands:
 
 ```
 nc -u [open-synscan-ip] 6667
@@ -79,10 +80,10 @@ https://circuitmaker.com/Projects/Details/Vicente-Sirvent/SynscanMotor
 
 ![screeshot](https://raw.githubusercontent.com/vsirvent/Open-Synscan/master/Hardware/open-synscan-3d.png)
 
-Motors are mounted in the telescope mount with 3d print models available in "3dFiles" folder. Step motors use gt2 6mm with wheels (60 and 16 teeth) + 258mm gt2 6mm closed belts to move the gears of the mount.
+Motors are mounted in the telescope mount with 3d print models available in "3dFiles" folder. Step motors use gt2 6mm with wheels (60 and 16 teeth) + 158mm gt2 6mm closed belts to move the gears of the mount.
 
 ## Demo
 
-This demo video shows Open-Synscan working with Cartes du Ciel + EQMOD + SynscanCom2Wifi (https://github.com/vsirvent/SynscanCom2Wifi) to control an Exos-2 mount using WIFI connection:
+This demo video shows Open-Synscan working with Cartes du Ciel + EQMOD + SynscanCom2Wifi (https://github.com/vsirvent/SynscanCom2Wifi) to control a Meade LXD75 mount using WIFI connection:
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/-moP3M088pw/0.jpg)](https://www.youtube.com/watch?v=-moP3M088pw)
