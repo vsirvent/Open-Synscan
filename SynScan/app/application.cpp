@@ -52,10 +52,10 @@ void init() {
 	WifiAccessPoint.enable(true);
 	WifiAccessPoint.setIP(IPAddress("192.168.5.1"));
 	WifiAccessPoint.config("SynScan", "12345678", AUTH_WPA2_PSK, false, 5);
-
 	WifiStation.enable(true);
+#ifdef WIFI_STATION
 	WifiStation.enableDHCP(true);
 	WifiStation.config(WIFI_STATION_SSID, WIFI_STATION_PASS);
-
+#endif
 	System.onReady(ready);
 }

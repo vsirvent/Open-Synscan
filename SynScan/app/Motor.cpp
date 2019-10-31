@@ -611,4 +611,3 @@ Motor::processCommand(const Command* cmd) {
 
 	return reply;
 }
-

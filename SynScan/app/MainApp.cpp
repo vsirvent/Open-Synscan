@@ -37,7 +37,7 @@ MainApp::MainApp() {
 
 	Logger::notice("MainApp: Start timers...");
 	AppTimer.start(true);
-
+//	mOneSecTimer->initializeMs(1000, std::bind(&MainApp::oneSecTick, this)).start();
 	mOneSecTimer->initializeMs(1000, TimerDelegate(&MainApp::oneSecTick, this)).start();
 
 	Logger::notice("MainApp: Init done");
