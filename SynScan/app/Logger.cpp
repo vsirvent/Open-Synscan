@@ -119,7 +119,7 @@ void Logger::defaultLog(Level level, const char* message) {
 //	Serial.print("[");
 //	Serial.print(mLevelStrings[level]);
 //	Serial.print("] ");
-//	Serial.println(message);
+// 	Serial.println(message);
 }
 
 // typedef Logger_<SerialOutput> SerialLogger;

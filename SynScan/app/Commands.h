@@ -351,6 +351,7 @@ enum class ECommand {
 	GET_VERSION,
 	EXT_SET,
 	EXT_GET,
+	PULSE_GUIDE,
 	NONE
 };
 
@@ -491,11 +492,88 @@ public:
 	}
 };
 
+class PulseGuideCmd: public Command {
+public:
+	static const u8 PULSE_PKT_START = 0x35;
+	static const int MSG_SIZE = 8;
+private:
+	int mDuration = 0;
+	float mRate = 0.0f;
+	static int sSeq;
+	EDirection mDir = EDirection::NONE;
+public:
+	PulseGuideCmd() {
+		mCmd = ECommand::PULSE_GUIDE;
+	}
+
+	int GetDuration() {
+		return mDuration;
+	}
+
+	float GetRate() {
+		return mRate;
+	}
+
+	EDirection GetDir() {
+		return mDir;
+	}
+	
+	bool Parse(const char* data, int len) {
+		bool ret = false;
+		if (len == MSG_SIZE) {
+			if (data[0] == PULSE_PKT_START && sSeq != data[1]) {
+				sSeq = data[1];
+				char dir = data[2];
+				switch (dir) {
+				case 0: {
+					mAxis = EAxis::AXIS_DEC;
+					mDir = EDirection::CW;
+					break;
+				}
+				case 1: {
+					mAxis = EAxis::AXIS_DEC;
+					mDir = EDirection::CCW;
+					break;
+				}
+				case 2: {
+					mAxis = EAxis::AXIS_RA;
+					mDir = EDirection::CW;
+					break;
+				}
+				case 3: {
+					mAxis = EAxis::AXIS_RA;
+					mDir = EDirection::CCW;
+					break;
+				}
+				}
+				memcpy(&mDuration, data + 3, 4);
+				if (mDuration > 10000) {
+					Logger::warning("Pulse guide parse: Too long pulse, limit to 10 secs.");
+					mDuration = 10000;
+				}
+				mRate = ((float)data[7])/10.0f;
+				if (mRate > 10.0f) {
+					Logger::warning("Pulse guide parse: Too fast rate pulse, limit to <x10 sideral.");
+					mRate = 10.0f;
+				}else if (mRate < 0.1f) {
+					Logger::warning("Pulse guide parse: Too slow rate pulse, limit to >x0.1 sideral.");
+					mRate = 0.1f;
+				}
+				Logger::notice("Pulse guide parse: mAxis = %d, mDir = %d, mDuration = %d, mRate(x10) = %d",
+						mAxis, mDir, mDuration, (int)(mRate*10.0f));
+			}
+		} else {
+			Logger::error("Bad message size %d", len);
+		}
+		return ret;
+	}
+};
+
 class SetPositionCommand: public Command {
 private:
 	static const int MSG_SIZE = 9;
 	int mPosition = 0;
-
+	
 public:
 
 	SetPositionCommand() {

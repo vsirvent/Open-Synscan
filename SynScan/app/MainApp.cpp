@@ -37,6 +37,7 @@ MainApp::MainApp() {
 
 	Logger::notice("MainApp: Start timers...");
 	AppTimer.start(true);
+
 	mOneSecTimer->initializeMs(1000, TimerDelegate(&MainApp::oneSecTick, this)).start();
 
 	Logger::notice("MainApp: Init done");
@@ -56,6 +57,7 @@ void
 MainApp::oneSecTick() {
 	mRaMotor->printInfo();
 	mDecMotor->printInfo();
+	mUdpComm->sendDiscovery();
 }
 
 void

@@ -98,8 +98,8 @@ void Motor::setMicroSteps(bool active) {
 int Motor::updateCurrentStepPeriod(int target_step) {
 	int ret = target_step;
 	if (mCurrentStepPeriod != target_step) {
-		int current_step_freq = Defines::TIMER_FREQ / mCurrentStepPeriod;
-		int target_step_freq = Defines::TIMER_FREQ / target_step;
+		int current_step_freq = mCurrentStepFreq;
+		int target_step_freq = (target_step!=0)?Defines::TIMER_FREQ / target_step:INFINITE;
 		int diff_freq = abs(current_step_freq - target_step_freq);
 
 		//Only apply acceleration if diff is greater than sideral freq.
@@ -120,14 +120,17 @@ int Motor::updateCurrentStepPeriod(int target_step) {
 					current_step_freq = target_step_freq;
 				}
 			}
-			ret = (Defines::TIMER_FREQ / current_step_freq); //new step period
+			ret = (current_step_freq!=0)?(Defines::TIMER_FREQ / current_step_freq):INFINITE; //new step period
 		}
+	}
+	if (ret < 4) {
+		ret = 4; //minimum 4 periods per step
 	}
 	return ret;
 }
 
 void Motor::setStepPeriod(u32 period) {
-	u32 speed = mSideralStepPeriod / period;
+	u32 speed = (period!=0)?(mSideralStepPeriod / period):INFINITE;
 	if (!mMicroStep) {
 		speed *= HIGH_SPEED_RATIO;
 	}
@@ -176,6 +179,7 @@ void Motor::on100msecTick() {
 		if (mToStop) {
 			//Decelerate to sideral speed and stop
 			mCurrentStepPeriod = updateCurrentStepPeriod(mSideralStepPeriod);
+			mCurrentStepFreq = (mCurrentStepPeriod!=0)?(Defines::TIMER_FREQ/mCurrentStepPeriod):INFINITE;
 			if (mCurrentStepPeriod >= mSideralStepPeriod) {
 				stop();
 			}
@@ -200,49 +204,89 @@ void Motor::on100msecTick() {
 			} else {
 				mCurrentStepPeriod = ((int) (SIDERAL_STEP_COUNT / 2.0f));
 			}
+			mCurrentStepFreq = (mCurrentStepPeriod!=0)?(Defines::TIMER_FREQ/mCurrentStepPeriod):INFINITE;
 		}
 	} else {
 		//Track
 		int sideral = mSideralStepPeriod;
-		if (mSideralStepPeriod != 1000) {
-			sideral = (sideral * 1000) / mAutoGuideMode;
-		}
+		//This code was not really used
+		//if (mAutoGuideMode != 1000) {
+		//	sideral = (sideral * 1000) / mAutoGuideMode;
+		//}
 		int target_period = mToStop ? sideral : mStepPeriod;
 		mCurrentStepPeriod = updateCurrentStepPeriod(target_period);
+		mCurrentStepFreq = (mCurrentStepPeriod!=0)?Defines::TIMER_FREQ/mCurrentStepPeriod:INFINITE;
 
 		if (mCurrentStepPeriod >= mSideralStepPeriod && mToStop) {
 			stop();
 		}
 	}
-
+	if (mMoving) {
+		//if ((mDir == EDirection::CW && mPosition > mMaxCount)
+		//		|| (mDir == EDirection::CCW && mPosition < mMinCount)) {
+			//Absolute position protection
+			//TODO: Calculate correctly the limits, depending the RA position
+			//DEC limit changed. The current limit algorithm is too hard.
+		//	stop();
+		//}
+	}
+	if (mIsPulseDone) {
+		Logger::notice("Motor[%d]::on100msecTick: Pulse guide done", mAxis);
+		mIsPulseDone = false;
+	}
 }
 
 void IRAM_ATTR Motor::onTick() {
-	if (mMoving) {
+	bool pulse_moving = false;
+	int current_step_period = mCurrentStepPeriod;
+	EDirection current_dir = mDir;
+
+	if (++mPulseCurrentTicks <= mPulseTotalTicks) {
+		//Modify current step period with pulse guide
+		pulse_moving = true;
+		if (mMoving) {
+			int pulse_step_freq = mPulseStepFreq;
+			if (mDir != mPulseDir) {
+				pulse_step_freq *= -1;
+			}
+			int result_step_freq = mCurrentStepFreq + pulse_step_freq;
+			if (result_step_freq < 0) {
+				//If negative step freq change direction
+				current_dir = (current_dir==EDirection::CW)?EDirection::CCW:EDirection::CW;
+				result_step_freq = abs(result_step_freq);
+			}
+			current_step_period = (result_step_freq!=0)?Defines::TIMER_FREQ/result_step_freq:INFINITE;
+		}else{
+			//If motor is not moving just set pulse guide values
+			current_dir = mPulseDir;
+			setDir(current_dir);
+			current_step_period = (mPulseStepFreq!=0)?Defines::TIMER_FREQ/mPulseStepFreq:INFINITE;
+		}
+		if (mPulseCurrentTicks == mPulseTotalTicks) {
+			mIsPulseDone = true;
+		}
+	}
+	if (mMoving || pulse_moving) {
 
 		mStepCount++;
 
-		u32 p2 = mCurrentStepPeriod/2;
-		if (mStepCount >= mCurrentStepPeriod) {
+		u32 p2 = current_step_period / 2;
+		if (mStepCount >= current_step_period) {
 
 			mStepCount = 0;
 			mStepDown = true;
 			digitalWrite(mStepPin, 0);
 
-			u32 amount = mMicroStep?1:HIGH_SPEED_RATIO;
+			u32 amount = mMicroStep ? 1 : HIGH_SPEED_RATIO;
 
-			if (mDir == EDirection::CCW) {
+			if (current_dir == EDirection::CCW) {
 				amount = -amount;
 			}
 
 			mPosition += amount;
-			if ((mDir == EDirection::CW && mPosition > mMaxCount) ||
-					(mDir == EDirection::CCW && mPosition < mMinCount)) {
-				//Absolute position protection
-				stop();
-			}
+
 			if (mType == ESlewType::GOTO) {
-				if (mDir == EDirection::CW) {
+				if (current_dir == EDirection::CW) {
 					if (mPosition >= mTargetPosition) {
 						stop();
 					}
@@ -281,6 +325,16 @@ Motor::processCommand(const Command* cmd) {
 		version_reply->setVersion(VERSION_MAJOR, VERSION_MINOR, VERSION_MICRO,
 				VERSION_PATCH);
 		reply = version_reply;
+		break;
+	}
+	case ECommand::PULSE_GUIDE: {
+		PulseGuideCmd* pulse_cmd = (PulseGuideCmd*)cmd;
+		Logger::notice("Motor[%d]: Pulse guide: dir = %d, msec = %d, rate(x10) = %d",
+				mAxis, pulse_cmd->GetDir(), pulse_cmd->GetDuration(), (int)(pulse_cmd->GetRate()*10.0f));
+		mPulseDir = pulse_cmd->GetDir();
+		mPulseStepFreq = (int)((float)(Defines::TIMER_FREQ/(int)(mSideralStepPeriod))*pulse_cmd->GetRate());
+		mPulseCurrentTicks = 0;
+		mPulseTotalTicks = (pulse_cmd->GetDuration()*Defines::TIMER_FREQ)/1000;
 		break;
 	}
 	case ECommand::SET_POSITION: {
@@ -410,6 +464,7 @@ Motor::processCommand(const Command* cmd) {
 		}
 		if (mType != ESlewType::NONE) {
 			mCurrentStepPeriod = mSideralStepPeriod;
+			mCurrentStepFreq = Defines::TIMER_FREQ/mCurrentStepPeriod;
 			mToStop = false;
 			mMoving = true;
 			reply = new EmptyReply();

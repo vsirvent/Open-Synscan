@@ -22,10 +22,28 @@
 UdpComm::UdpComm() {
 	mUdp = new UdpConnection(UdpConnectionDataDelegate(&UdpComm::onUdpRx, this));
 	mUdp->listen(Defines::SYNSCAN_PORT);
+	mPulseUdp = new UdpConnection(UdpConnectionDataDelegate(&UdpComm::onPulseUdpRx, this));
+	mPulseUdp->listen(Defines::PULSE_GUIDE_PORT);
+	mDiscoveryData[0] = Defines::DISCOVERY_PT;
 }
 
 UdpComm::~UdpComm() {
 	delete mUdp;
+	delete mPulseUdp;
+}
+
+void
+UdpComm::onPulseUdpRx(UdpConnection& connection, char *data, int size, IPAddress remoteIP, uint16_t remotePort) {
+	bool ok = false;
+	if (data != NULL) {
+		Command* cmd = CommandFactory::parseData(data, size);
+		if (cmd != NULL) {
+			if (mListener != NULL) {
+				mListener->onCommandReceived(this, cmd);
+			}
+			delete cmd;
+		}
+	}
 }
 
 void
@@ -39,7 +57,7 @@ UdpComm::onUdpRx(UdpConnection& connection, char *data, int size, IPAddress remo
 			break;
 		}
 	}
-	Logger::verbose("UDP <= [%s][%d]: %s", ok?"OK":"ERR", size, data);
+	//Logger::verbose("UDP <= [%s][%d]: %s", ok?"OK":"ERR", size, data);
 	if (data != NULL && size > 1) {
 		Command* cmd = CommandFactory::parseData(data, size);
 		if (cmd != NULL) {
@@ -53,12 +71,20 @@ UdpComm::onUdpRx(UdpConnection& connection, char *data, int size, IPAddress remo
 	}
 }
 
+void
+UdpComm::sendDiscovery() {
+	mUdp->sendTo(WifiAccessPoint.getNetworkBroadcast(), Defines::PULSE_DISCOVERY_PORT, (const char*)mDiscoveryData, 2);
+	if (WifiStation.getConnectionStatus() == EStationConnectionStatus::eSCS_GotIP) {
+		mUdp->sendTo(WifiStation.getNetworkBroadcast(), Defines::PULSE_DISCOVERY_PORT, (const char*)mDiscoveryData, 2);
+	}
+}
+
 bool
 UdpComm::sendReply(const Reply* reply) {
 	bool ret = false;
 	if (mRemotePort != 0) {
 		String str = reply->toString();
-		Logger::verbose("UDP => %s", str.c_str());
+		//Logger::verbose("UDP => %s", str.c_str());
 		mUdp->sendStringTo(mRemoteIP, mRemotePort, str);
 		ret = true;
 	}

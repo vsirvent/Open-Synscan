@@ -25,12 +25,28 @@
 struct Defines {
 	static const u32 LOG_PORT = 6667;
 	static const u32 SYNSCAN_PORT = 11880;
-	static const u32 TIMER_FREQ = 64935*3; //EQ6 interrupt freq
+	static const u32 PULSE_GUIDE_PORT = 5002;
+	static const u32 PULSE_DISCOVERY_PORT = 5003;
+	static const u32 DISCOVERY_PT = 0x36;
+	static const u32 TIMER_FREQ = 64935*2; //EQ6 interrupt freq
 };
 
+//Use WIFI_STATION to connect Open-Synscan to an existing wifi network.
+//Open-synscan can communicate through "Synscan" network AND configured WIFI_STATION_SSID
+//network. This is usefull if you have several WIFI devices in your setup
+
+/**
+ * Example:
+ *                                    |<-->[DEVICE: Camera]
+ *                                    |<-->[DEVICE: Focuser]
+ * [LAPTOP]<-->[WIFI_STATION_SSID]<-->|
+ *                                    |<-->[DEVICE: Open-synscan]<-->[SSID:Synscan(192.168.5.1)]<-->...
+ */
+#if 0
 #define WIFI_STATION
-#define WIFI_STATION_SSID "Focuser"
-#define WIFI_STATION_PASS "12345678"
+#define WIFI_STATION_SSID "WIFI_SSID"
+#define WIFI_STATION_PASS "here_the_password"
+#endif
 
 #define OVERCLOCK
 #ifdef OVERCLOCK

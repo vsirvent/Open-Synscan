@@ -23,29 +23,6 @@
 MainApp* app = NULL;
 
 
-#ifdef WIFI_STATION
-void networkScanCompleted(bool succeeded, BssList list) {
-	bool relay_ok = false;
-	Serial.print("Synscan::networkScanCompleted start\n");
-	if (succeeded) {
-		for (int i = 0; i < list.count(); i++) {
-			if (list[i].ssid == WIFI_STATION_SSID) {
-				Serial.print("Focuser found, connecting...\n");
-				WifiStation.config(list[i].ssid, WIFI_STATION_PASS);
-				relay_ok = true;
-				break;
-			}
-		}
-	}
-
-	if (relay_ok) {
-		Serial.print("Synscan::networkScanCompleted: Connecting...\n");
-		WifiStation.connect();
-	}
-	Serial.print("Synscan::networkScanCompleted end\n");
-}
-#endif
-
 /**
  * Will be called when WiFi hardware and software initialization was finished
  * and system initialization was completed
@@ -56,8 +33,6 @@ void ready() {
 	Logger::notice("------------------------");
 	Logger::notice("SynScan init");
 	Logger::notice("------------------------");
-
-	WifiAccessPoint.setIP(IPAddress("192.168.5.1"));
 	app = new MainApp();
 
 	// Set system ready callback method
@@ -70,19 +45,17 @@ void ready() {
 void init() {
 	System.setCpuFrequency(CPU_FREQ);
 	Serial.begin(SERIAL_BAUD_RATE);
-	Serial.systemDebugOutput(false);
+	Serial.systemDebugOutput(true);
 	Logger::setLogLevel(Logger::NOTICE);
 
 	// Soft access point
 	WifiAccessPoint.enable(true);
 	WifiAccessPoint.setIP(IPAddress("192.168.5.1"));
-	WifiAccessPoint.config("SynScan", "12345678", AUTH_WPA2_PSK);
+	WifiAccessPoint.config("SynScan", "12345678", AUTH_WPA2_PSK, false, 5);
 
-#ifdef WIFI_STATION
 	WifiStation.enable(true);
-	WifiStation.startScan(&networkScanCompleted);
-#else
-	WifiStation.enable(false);
-#endif
+	WifiStation.enableDHCP(true);
+	WifiStation.config(WIFI_STATION_SSID, WIFI_STATION_PASS);
+
 	System.onReady(ready);
 }
