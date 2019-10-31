@@ -44,14 +44,15 @@ static void IRAM_ATTR tick_timer_isr_cb(void *arg)
 		return;
 	}
 	((TickTimer*)arg)->onTick();
+	return;
 }
 
 TickTimer::TickTimer() {
-	ETS_FRC_TIMER1_INTR_ATTACH((void*) tick_timer_isr_cb, (void *) this);
+	ETS_FRC_TIMER1_INTR_ATTACH((void*)tick_timer_isr_cb, (void *) this);
 }
 
 TickTimer::~TickTimer() {
-	ETS_FRC_TIMER1_INTR_ATTACH((void*) tick_timer_isr_cb, null);
+	ETS_FRC_TIMER1_INTR_ATTACH((void*)tick_timer_isr_cb, (void*)null);
 	stop();
 }
 

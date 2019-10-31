@@ -22,6 +22,7 @@
 
 class UdpComm: public Comm {
 private:
+	IPAddress mBroadcast;
 	IPAddress mRemoteIP;
 	uint16_t mRemotePort = 0;
 	UdpConnection* mUdp = NULL;
