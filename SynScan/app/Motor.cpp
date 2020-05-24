@@ -18,6 +18,9 @@
 #include "Motor.h"
 #include "MainApp.h"
 
+#define STEP_TO_FREQ(x) (x!=0)?(Defines::TIMER_FREQ / x):INFINITE;
+#define FREQ_TO_STEP(x) (x!=0)?(Defines::TIMER_FREQ / x):INFINITE;
+
 Motor::Motor(EAxis axis) {
 
 	Logger::notice("Motor[%d]: Initializing %s motor...", axis,
@@ -64,7 +67,7 @@ Motor::Motor(EAxis axis) {
 	Serial.printf("STEPS_PER_WORM_REV = %d\n", STEPS_PER_WORM_REV);
 	Serial.printf("STEPS_PER_RA_REV = %d\n", STEPS_PER_RA_REV);
 	Serial.printf("SIDERAL_STEP_COUNT = %f\n", SIDERAL_STEP_COUNT);
-	Serial.printf("100MS_STEP = %d\n", m100msPeriod);
+	Serial.printf("SIDERAL_PERIOD_FREQ = %d\n", SIDERAL_PERIOD_FREQ);
 	Serial.printf("TIMER_FREQ = %d\n", Defines::TIMER_FREQ);
 
 	m100msecTimer = new Timer();
@@ -95,13 +98,13 @@ void Motor::setMicroSteps(bool active) {
 	}
 }
 
-int Motor::updateCurrentStepPeriod(int target_step) {
+int Motor::updateCurrentStepPeriod(u32 target_step) {
 	int ret = target_step;
+	mTargetStepPeriod = target_step;
 	if (mCurrentStepPeriod != target_step) {
 		int current_step_freq = mCurrentStepFreq;
-		int target_step_freq = (target_step!=0)?Defines::TIMER_FREQ / target_step:INFINITE;
+		int target_step_freq = (target_step!=0)?(Defines::TIMER_FREQ / target_step):INFINITE;
 		int diff_freq = abs(current_step_freq - target_step_freq);
-
 		//Only apply acceleration if diff is greater than sideral freq.
 		if (diff_freq > SIDERAL_PERIOD_FREQ) {
 			int block_freq = diff_freq / 8;
@@ -121,6 +124,14 @@ int Motor::updateCurrentStepPeriod(int target_step) {
 				}
 			}
 			ret = (current_step_freq!=0)?(Defines::TIMER_FREQ / current_step_freq):INFINITE; //new step period
+			//Due to int division freq operations can result to same period, so we force increase/decrease
+			if (ret == mCurrentStepPeriod) {
+				if (target_step < ret) {
+					ret--;
+				}else{
+					ret++;
+				}
+			}
 		}
 	}
 	if (ret < 4) {
@@ -241,7 +252,7 @@ void IRAM_ATTR Motor::onTick() {
 	int current_step_period = mCurrentStepPeriod;
 	EDirection current_dir = mDir;
 
-	if (++mPulseCurrentTicks <= mPulseTotalTicks) {
+	if (mPulseTotalTicks > 0 && ++mPulseCurrentTicks <= mPulseTotalTicks) {
 		//Modify current step period with pulse guide
 		pulse_moving = true;
 		if (mMoving) {
@@ -264,6 +275,7 @@ void IRAM_ATTR Motor::onTick() {
 		}
 		if (mPulseCurrentTicks == mPulseTotalTicks) {
 			mIsPulseDone = true;
+			mPulseTotalTicks = 0;
 		}
 	}
 	if (mMoving || pulse_moving) {

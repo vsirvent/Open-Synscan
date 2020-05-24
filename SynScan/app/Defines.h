@@ -28,7 +28,7 @@ struct Defines {
 	static const u32 PULSE_GUIDE_PORT = 5002;
 	static const u32 PULSE_DISCOVERY_PORT = 5003;
 	static const u32 DISCOVERY_PT = 0x36;
-	static const u32 TIMER_FREQ = 64935*2; //EQ6 interrupt freq
+	static const u32 TIMER_FREQ = 50000; 
 };
 
 //Use WIFI_STATION to connect Open-Synscan to an existing wifi network.

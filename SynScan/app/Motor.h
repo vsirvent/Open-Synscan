@@ -56,16 +56,13 @@ private:
 	int mBreakCount = 0;
 	int mBreakPosition = 3500;
 
-	int mSideralStepPeriod = (int)(SIDERAL_STEP_COUNT);
+	const int mSideralStepPeriod = (int)(SIDERAL_STEP_COUNT);
 	int mStepPeriod = mSideralStepPeriod;
-	int mFastStepMult = 300;
+	int mFastStepMult = 200;
 	int mStepCount = 0;
 	bool mStepDown = false;
 	int mCurrentStepPeriod = mSideralStepPeriod;
 	int mCurrentStepFreq = Defines::TIMER_FREQ/mCurrentStepPeriod;
-
-	int m100msCount = 0;
-	int m100msPeriod = Defines::TIMER_FREQ/10;
 
 	bool mToStop = false;
 	bool mMoving = false;
@@ -92,7 +89,7 @@ private:
 	bool mIsPulseDone = false;
 	EAxis mAxis;
 
-	int updateCurrentStepPeriod(int target_step);
+	int updateCurrentStepPeriod(u32 target_step);
 	void setStepPeriod(u32 period);
 	void setMicroSteps(bool active);
 	void setDir(EDirection dir);
