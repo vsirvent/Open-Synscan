@@ -4,7 +4,7 @@
 
 Open-Synscan is a free open source project to create your own GOTO motorization system for your equatorial telescope mount (like eq-3, eq-5, exos-2, etc...). It implements skywatcher synscan protocol and you can use any application compliant with Synscan protocol to manage the telescope mount over WIFI network connection.
 
-Open-Synscan runs on a ESP8266 to control 2 step motors and work with Skywatcher SynScan protocol using WIFI connection.
+Open-Synscan runs on a ESP8266 to control 2 step motors and works with Skywatcher SynScan protocol using WIFI connection.
 
 Tested with EQMOD and Android Synscan PRO.
 
